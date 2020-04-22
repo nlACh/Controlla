@@ -30,7 +30,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(R.layout.activity_main);
 
         Button link = findViewById(R.id.link);
@@ -38,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent in = new Intent(getBaseContext(), BT.class);
-                startActivity(in);
+                startActivityForResult(in, 2);
             }
         });
         tv = findViewById(R.id.tv);
@@ -124,4 +123,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 2){
+            if(resultCode == RESULT_OK){
+                String res = data.getStringExtra("MAC");
+                tv.setText(res);
+            }
+        }
+    }
 }
