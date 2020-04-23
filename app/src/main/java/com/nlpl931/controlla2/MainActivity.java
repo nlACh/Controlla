@@ -28,7 +28,8 @@ public class MainActivity extends AppCompatActivity {
     private OutputStream os = null;
     private BluetoothSocket bs = null;
 
-    String MAC = null;
+    public static String MAC = null;
+
     private static final int loopInterval = 25; // In milliseconds. Will run 40 times a second.
     private boolean useBodySensor = false, canTransmit = false;
     int[][] data = new int[2][2]; // This data will be sent over to whatever device needed
