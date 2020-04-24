@@ -37,8 +37,6 @@ public class MainActivity extends AppCompatActivity {
     private Switch arm, joy;
     private JoystickView head, motor;
 
-    private static final UUID uid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -108,7 +106,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }, loopInterval);
 
-        // TODO:    RX/TX support
 
     }
 
@@ -120,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume(){
         super.onResume();
-        chkBTstate();
+
     }
 
     @Override
@@ -151,50 +148,14 @@ public class MainActivity extends AppCompatActivity {
             if(resultCode == RESULT_OK){
                 MAC = data.getStringExtra("MAC");
                 tv.setText(MAC);
-                connect();
+                connectDevice(data);
             }
         }
     }
+    private void connectDevice(Intent data){
 
-    private void chkBTstate()
-    {
-        ba = BluetoothAdapter.getDefaultAdapter();
-        if (ba == null) finish();
-        else {
-            if (!ba.isEnabled())
-            {
-                Intent en = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(en,1);
-            }
-        }
     }
 
-    private void sendData(String msg){
-        byte[] Buffer = msg.getBytes();
-        try {
-            os.write(Buffer);
-        }catch (IOException e){
-            finish();
-        }
-    }
-
-    void connect(){
-        BluetoothDevice bd = ba.getRemoteDevice(MAC);
-        try {
-            bs = bd.createRfcommSocketToServiceRecord(uid);
-        }catch (IOException ex1){}
-
-        try {
-            bs.connect();
-        }catch (IOException e){
-            try {
-                bs.close();
-                tv.setText("Trying to close");
-            }catch (IOException e2){
-                tv.setText("Unable to close");
-            }
-        }
-    }
 
     // TODO: Use handlers
 }
