@@ -1,12 +1,13 @@
 package com.nlpl931.controlla2;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 
 
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,7 +20,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.OutputStream;
+
 import static com.nlpl931.controlla2.State.*;
 import static com.nlpl931.controlla2.Constants.*;
 
@@ -31,8 +32,8 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothService mBTService = null;
     private StringBuffer sbOut = null;
 
-    public static String MAC = null;
     private final String TAG = "MainActivity";
+    public static String MAC = null;
     private static final int loopInterval = 25; // In milliseconds. Will run 40 times a second.
     private boolean useBodySensor = false, canTransmit = false;
     int[][] data = new int[2][2]; // This data will be sent over to whatever device needed
@@ -44,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         ba = BluetoothAdapter.getDefaultAdapter();
         setup();
 
@@ -153,8 +155,6 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 2){
             if(resultCode == RESULT_OK){
-                MAC = data.getStringExtra("MAC");
-                tv.setText(MAC);
                 connectDevice(data);
             }
         }
@@ -162,8 +162,8 @@ public class MainActivity extends AppCompatActivity {
     private void connectDevice(Intent data){
         Bundle extras = data.getExtras();
         if (extras == null) return;
-
         String addr = extras.getString("MAC");
+        Log.d("Connected to: ", addr);
         BluetoothDevice device = ba.getRemoteDevice(addr);
         mBTService.connect(device);
     }
@@ -188,7 +188,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // New handler!
+    @SuppressLint("HandlerLeak")
     private final Handler handler = new Handler(){
+        @SuppressLint("HandlerLeak")
         @Override
         public void handleMessage(Message msg){
             switch (msg.what){
