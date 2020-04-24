@@ -3,33 +3,36 @@ package com.nlpl931.controlla2;
 import androidx.appcompat.app.AppCompatActivity;
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 
-import android.app.Activity;
+
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Set;
-import java.util.UUID;
+import static com.nlpl931.controlla2.State.*;
+import static com.nlpl931.controlla2.Constants.*;
+
 
 public class MainActivity extends AppCompatActivity {
 
     private BluetoothAdapter ba;
-    private OutputStream os = null;
-    private BluetoothSocket bs = null;
+    private String mConnectedDeviceName = null;
+    private BluetoothService mBTService = null;
+    private StringBuffer sbOut = null;
 
     public static String MAC = null;
-
+    private final String TAG = "MainActivity";
     private static final int loopInterval = 25; // In milliseconds. Will run 40 times a second.
     private boolean useBodySensor = false, canTransmit = false;
     int[][] data = new int[2][2]; // This data will be sent over to whatever device needed
@@ -41,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ba = BluetoothAdapter.getDefaultAdapter();
+        setup();
 
         Button link = findViewById(R.id.link);
         link.setOnClickListener(new View.OnClickListener() {
@@ -50,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(in, 2);
             }
         });
+
         tv = findViewById(R.id.tv);
         tv.setText("HI THERE!!");
         tx = findViewById(R.id.tv2);
@@ -109,20 +115,21 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @Override
-    protected void onPause(){
-        super.onPause();
-    }
 
     @Override
     protected void onResume(){
         super.onResume();
-
+        if (mBTService != null){
+            if (mBTService.getState() == STATE_NONE)
+                mBTService.start();
+        }
     }
 
     @Override
-    protected void onStop(){
-        super.onStop();
+    protected void onDestroy(){
+        super.onDestroy();
+        if (mBTService != null)
+            mBTService.stop();
     }
 
     //  Immersive mode
@@ -153,9 +160,71 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void connectDevice(Intent data){
+        Bundle extras = data.getExtras();
+        if (extras == null) return;
 
+        String addr = extras.getString("MAC");
+        BluetoothDevice device = ba.getRemoteDevice(addr);
+        mBTService.connect(device);
     }
 
+    private void setup(){
+        Log.d(TAG, "Setup");
+        mBTService = new BluetoothService(getBaseContext(), handler);
+        sbOut = new StringBuffer();
+    }
+    private void sendMessage(String msg){
+        if (mBTService.getState() != STATE_CONNECTED){
+            Toast.makeText(getBaseContext(), "Not connected", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-    // TODO: Use handlers
+        if (msg.length()>0){
+            byte[] send = msg.getBytes();
+            mBTService.write(send);
+            tx.setText(msg);
+            //et.setText("");
+        }
+    }
+
+    // New handler!
+    private final Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg){
+            switch (msg.what){
+                case MESSAGE_STATE_CHANGE:
+                    switch (msg.arg1){
+                        case STATE_CONNECTED:
+                            tx.setText("");
+                            //rx.setText("");
+                            break;
+
+                        case STATE_CONNECTING:
+                            break;
+
+                        case STATE_LISTEN:
+                        case STATE_NONE:
+                            break;
+                    }
+                    break;
+                case MESSAGE_WRITE:
+                    byte[] writeBuf = (byte[]) msg.obj;
+                    String writeMessage = new String(writeBuf);
+                    tx.append("Me: "+writeMessage+"\n");
+                    break;
+                case MESSAGE_READ:
+                    byte[] readBuf = (byte[]) msg.obj;
+                    String readMessage = new String(readBuf, 0, msg.arg1);
+                    tx.append(mConnectedDeviceName +": "+readMessage);
+                    break;
+                case MESSAGE_DEVICE_NAME:
+                    mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
+                    Toast.makeText(getBaseContext(), "Connected to:" +mConnectedDeviceName, Toast.LENGTH_SHORT).show();
+                    break;
+                case MESSAGE_TOAST:
+                    Toast.makeText(getBaseContext(), msg.getData().getString(TOAST), Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }
+    };
 }
