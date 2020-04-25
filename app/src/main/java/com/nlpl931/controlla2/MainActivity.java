@@ -1,6 +1,5 @@
 package com.nlpl931.controlla2;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 
@@ -20,10 +19,8 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
 import static com.nlpl931.controlla2.State.*;
 import static com.nlpl931.controlla2.Constants.*;
-
 
 public class MainActivity extends AppCompatActivity {
 
