@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">Controlla2</string>
+    <string name="cLayout">Change Layout</string>
+    <string name="itemSettings">Settings</string>
+    <string name="label_RX">RX</string>
+    <string name="label_TX">TX</string>
+    <string name="label_arm">ARM</string>
+    <string name="label_joy">JOYSTICK</string>
+    <string name="label_Sw">Switch</string>
+    <string name="label_intro">HI THERE!!</string>
+    <string name="label_armed">ARMED</string>
+    <string name="labelUnarmed">UNARMED</string>
+    <string name="label_Body_sensors">\"BODY SENSORS \"</string>
+    <string name="label_connecting">Connecting</string>
 </resources>

@@ -38,7 +38,7 @@
         android:id="@+id/tv"
         android:layout_width="200dp"
         android:layout_height="50dp"
-        android:text="RX"
+        android:text="@string/label_RX"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -49,7 +49,7 @@
         android:id="@+id/tv2"
         android:layout_width="200dp"
         android:layout_height="50dp"
-        android:text="TX"
+        android:text="@string/label_TX"
         app:layout_constraintTop_toBottomOf="@+id/tv"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
@@ -58,7 +58,7 @@
         android:id="@+id/arm"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="ARM "
+        android:text="@string/label_arm"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/head"
         app:layout_constraintStart_toEndOf="@+id/motor"
@@ -70,7 +70,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="100dp"
-        android:text="JOYSTICK "
+        android:text="@string/label_joy"
         app:layout_constraintEnd_toStartOf="@+id/head"
         app:layout_constraintStart_toEndOf="@+id/motor"
         app:layout_constraintTop_toBottomOf="@+id/tv" />
@@ -80,7 +80,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
-        android:text="Switch"
+        android:text="@string/label_Sw"
         app:layout_constraintBottom_toTopOf="@+id/motor"
         app:layout_constraintEnd_toStartOf="@+id/tv"
         app:layout_constraintHorizontal_bias="0.25"
@@ -101,10 +101,40 @@
         android:id="@+id/link"
         android:layout_width="30dp"
         android:layout_height="30dp"
-        android:background="@drawable/outline_link_black_18"
+        android:background="@drawable/outline_link_24"
         app:layout_constraintBottom_toTopOf="@+id/tv"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/finish"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:background="@drawable/baseline_power_settings_new_24"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/arm" />
+
+    <Button
+        android:id="@+id/menu"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="5dp"
+        android:background="@drawable/baseline_menu_24"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/info"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginTop="5dp"
+        android:background="@drawable/outline_info_24"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -26,7 +26,6 @@ public class BT extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.setFinishOnTouchOutside(false);
         setContentView(R.layout.activity_b_t);
         Set<BluetoothDevice> pd;
         ba = BluetoothAdapter.getDefaultAdapter();

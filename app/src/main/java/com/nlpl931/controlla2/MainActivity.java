@@ -12,15 +12,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.PopupMenu;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.Timer;
-import java.util.TimerTask;
 
 import static com.nlpl931.controlla2.State.*;
 import static com.nlpl931.controlla2.Constants.*;
@@ -33,14 +33,12 @@ public class MainActivity extends AppCompatActivity {
     private StringBuffer sbOut = null;
 
     private final String TAG = "MainActivity";
-    public static String MAC = null;
     private static final int loopInterval = 25; // In milliseconds. Will run 40 times a second.
     private boolean useBodySensor = false, canTransmit = false;
     int[][] data = new int[2][2]; // This data will be sent over to whatever device needed
     public static String str1, str2;
-    private TextView tv, tx;
+    private TextView rx, tx;
     private Switch arm, joy;
-    private JoystickView head, motor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,29 +52,73 @@ public class MainActivity extends AppCompatActivity {
         link.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent in = new Intent(getBaseContext(), BT.class);
+                Intent in = new Intent(v.getContext(), BT.class);
                 startActivityForResult(in, 2);
             }
         });
 
-        tv = findViewById(R.id.tv);
-        tv.setText("HI THERE!!");
+        rx = findViewById(R.id.tv);
+        rx.setText(R.string.label_intro);
         tx = findViewById(R.id.tv2);
 
         arm = findViewById(R.id.arm);
         joy = findViewById(R.id.joy);
-        head = findViewById(R.id.head);
-        motor = findViewById(R.id.motor);
+        JoystickView head = findViewById(R.id.head);
+        JoystickView motor = findViewById(R.id.motor);
+
+        final Button finish = findViewById(R.id.finish);
+        finish.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(TAG, "Goodbye");
+                finish();
+            }
+        });
+
+        final Button menu = findViewById(R.id.menu);
+        menu.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PopupMenu pop = new PopupMenu(v.getContext(), v);
+                pop.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch (item.getItemId()){
+                            case R.id.Change:
+                                return true;
+
+                            case R.id.settings:
+                                Toast.makeText(getBaseContext(), "Settings", Toast.LENGTH_SHORT).show();
+                                return true;
+
+                            default:
+                                return false;
+                        }
+                    }
+                });
+                pop.inflate(R.menu.popup_menu_main);
+                pop.show();
+            }
+        });
+
+        final Button info = findViewById(R.id.info);
+        info.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent info = new Intent(v.getContext(), Info.class);
+                startActivity(info);
+            }
+        });
 
         arm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (arm.isChecked()){
                     canTransmit = true;
-                    tv.setText("ARMED");
+                    rx.setText(R.string.label_armed);
                 }else{
                     canTransmit = false;
-                    tv.setText("UNARMED");
+                    rx.setText(R.string.labelUnarmed);
                 }
             }
         });
@@ -86,12 +128,12 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (joy.isChecked())
                 {
-                    joy.setText("BODY SENSORS ");
+                    joy.setText(R.string.label_Body_sensors);
                     useBodySensor = true;
                 }
                 else
                 {
-                    joy.setText("JOYSTICKS ");
+                    joy.setText(R.string.label_joy);
                     useBodySensor = false;
                 }
             }
@@ -103,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
                 str1 = angle +"\t"+ strength +"\t";
                 data[0][0] = strength;
                 data[0][1] = angle;
-                tv.setText(str1);
+                rx.setText(str1);
             }
         }, loopInterval);
 
@@ -117,10 +159,7 @@ public class MainActivity extends AppCompatActivity {
                 sender(str2);
             }
         }, loopInterval);
-
-
     }
-
 
     @Override
     protected void onResume(){
@@ -167,10 +206,12 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
     }
+
     private void connectDevice(Intent data){
         Bundle extras = data.getExtras();
         if (extras == null) return;
         String addr = extras.getString("MAC");
+        assert addr != null;
         Log.d("Connected to: ", addr);
         BluetoothDevice device = ba.getRemoteDevice(addr);
         mBTService.connect(device);
@@ -184,9 +225,14 @@ public class MainActivity extends AppCompatActivity {
         }
         mBTService = new BluetoothService(getBaseContext(), handler);
         sbOut = new StringBuffer();
+        for (int i = 0; i<2; i++){
+            for (int j = 0; j<2; j++)
+                data[i][j] = 0;
+        }
 
         // Set up a timer to send data at fixed intervals.
     }
+
     private void sender(String msg){
         if (mBTService.getState() != STATE_CONNECTED){
             //Toast.makeText(getBaseContext(), "Not connected", Toast.LENGTH_SHORT).show();
@@ -216,6 +262,8 @@ public class MainActivity extends AppCompatActivity {
                             break;
 
                         case STATE_CONNECTING:
+                            Log.d(TAG, "Connecting");
+                            tx.setText(R.string.label_connecting);
                             break;
 
                         case STATE_LISTEN:
