@@ -32,14 +32,12 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothService mBTService = null;
     private StringBuffer sbOut = null;
 
-    Timer timer;
-
     private final String TAG = "MainActivity";
     public static String MAC = null;
     private static final int loopInterval = 25; // In milliseconds. Will run 40 times a second.
     private boolean useBodySensor = false, canTransmit = false;
     int[][] data = new int[2][2]; // This data will be sent over to whatever device needed
-    String str1, str2;
+    public static String str1, str2;
     private TextView tv, tx;
     private Switch arm, joy;
     private JoystickView head, motor;
@@ -102,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
         motor.setOnMoveListener(new JoystickView.OnMoveListener() {
             @Override
             public void onMove(int angle, int strength) {
-                str1 = String.valueOf(angle)+"\t"+String.valueOf(strength)+"\t";
+                str1 = angle +"\t"+ strength +"\t";
                 data[0][0] = strength;
                 data[0][1] = angle;
                 tv.setText(str1);
@@ -112,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         head.setOnMoveListener(new JoystickView.OnMoveListener() {
             @Override
             public void onMove(int angle, int strength) {
-                str2 = String.valueOf(angle)+"\t"+String.valueOf(strength);
+                str2 = angle +"\t"+ strength;
                 data[1][0] = strength;
                 data[1][1] = angle;
                 tx.setText(str2);
@@ -188,7 +186,6 @@ public class MainActivity extends AppCompatActivity {
         sbOut = new StringBuffer();
 
         // Set up a timer to send data at fixed intervals.
-        timer = new Timer();
     }
     private void sender(String msg){
         if (mBTService.getState() != STATE_CONNECTED){
@@ -208,7 +205,6 @@ public class MainActivity extends AppCompatActivity {
     // New handler!
     @SuppressLint("HandlerLeak")
     private final Handler handler = new Handler(){
-        @SuppressLint("HandlerLeak")
         @Override
         public void handleMessage(Message msg){
             switch (msg.what){
@@ -216,7 +212,6 @@ public class MainActivity extends AppCompatActivity {
                     switch (msg.arg1){
                         case STATE_CONNECTED:
                             tx.setText("");
-                            timer.schedule(asyncSend, 0, 50);
                             //rx.setText("");
                             break;
 
@@ -247,15 +242,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
         }
-    };
 
-    TimerTask asyncSend = new TimerTask() {
-        @Override
-        public void run() {
-            // Do stuff here.
-            String dataToSend = str1+str2;
-            sender(dataToSend);
-        }
     };
 
 }
