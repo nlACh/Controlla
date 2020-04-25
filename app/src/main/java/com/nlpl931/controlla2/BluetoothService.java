@@ -190,6 +190,8 @@ class BluetoothService {
         bundle.putString(Constants.DEVICE_NAME, device.getName());
         msg.setData(bundle);
         mHandler.sendMessage(msg);
+        mHandler.post(sendData);
+        Log.d(TAG,"Set up runnable");
         // Update UI title
         updateUserInterfaceTitle();
     }
@@ -216,6 +218,8 @@ class BluetoothService {
         }
 
         mState = STATE_NONE;
+        // Stop the execution of runnable;
+        mHandler.removeCallbacks(sendData);
         // Update UI title
         updateUserInterfaceTitle();
     }
@@ -275,6 +279,15 @@ class BluetoothService {
         // Start the service over to restart listening mode
         BluetoothService.this.start();
     }
+
+    private Runnable sendData = new Runnable() {
+        @Override
+        public void run() {
+            String s = MainActivity.str1 + MainActivity.str2;
+            write(s.getBytes());
+            mHandler.postDelayed(this, 100);
+        }
+    };
 
     /**
      * This thread runs while listening for incoming connections. It behaves
