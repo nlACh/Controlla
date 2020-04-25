@@ -19,6 +19,9 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import static com.nlpl931.controlla2.State.*;
 import static com.nlpl931.controlla2.Constants.*;
 
@@ -29,11 +32,14 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothService mBTService = null;
     private StringBuffer sbOut = null;
 
+    Timer timer;
+
     private final String TAG = "MainActivity";
     public static String MAC = null;
     private static final int loopInterval = 25; // In milliseconds. Will run 40 times a second.
     private boolean useBodySensor = false, canTransmit = false;
     int[][] data = new int[2][2]; // This data will be sent over to whatever device needed
+    String str1, str2;
     private TextView tv, tx;
     private Switch arm, joy;
     private JoystickView head, motor;
@@ -96,18 +102,21 @@ public class MainActivity extends AppCompatActivity {
         motor.setOnMoveListener(new JoystickView.OnMoveListener() {
             @Override
             public void onMove(int angle, int strength) {
-                tv.setText(String.valueOf(angle)+"\t"+String.valueOf(strength));
+                str1 = String.valueOf(angle)+"\t"+String.valueOf(strength)+"\t";
                 data[0][0] = strength;
                 data[0][1] = angle;
+                tv.setText(str1);
             }
         }, loopInterval);
 
         head.setOnMoveListener(new JoystickView.OnMoveListener() {
             @Override
             public void onMove(int angle, int strength) {
-                tx.setText(String.valueOf(angle)+"\t"+String.valueOf(strength));
+                str2 = String.valueOf(angle)+"\t"+String.valueOf(strength);
                 data[1][0] = strength;
                 data[1][1] = angle;
+                tx.setText(str2);
+                sender(str2);
             }
         }, loopInterval);
 
@@ -150,10 +159,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data){
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 2){
-            if(resultCode == RESULT_OK){
-                connectDevice(data);
-            }
+        switch (requestCode){
+            case 1:
+                if (resultCode == RESULT_OK)    Log.d(TAG, "Switching BT on.");
+                break;
+
+            case 2:
+                if(resultCode == RESULT_OK)     connectDevice(data);
+                break;
         }
     }
     private void connectDevice(Intent data){
@@ -167,12 +180,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void setup(){
         Log.d(TAG, "Setup");
+        if (!ba.isEnabled()){
+            Intent on = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(on, 1);
+        }
         mBTService = new BluetoothService(getBaseContext(), handler);
         sbOut = new StringBuffer();
+
+        // Set up a timer to send data at fixed intervals.
+        timer = new Timer();
     }
-    private void sendMessage(String msg){
+    private void sender(String msg){
         if (mBTService.getState() != STATE_CONNECTED){
-            Toast.makeText(getBaseContext(), "Not connected", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getBaseContext(), "Not connected", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "Not connected");
             return;
         }
 
@@ -195,6 +216,7 @@ public class MainActivity extends AppCompatActivity {
                     switch (msg.arg1){
                         case STATE_CONNECTED:
                             tx.setText("");
+                            timer.schedule(asyncSend, 0, 50);
                             //rx.setText("");
                             break;
 
@@ -226,4 +248,14 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    TimerTask asyncSend = new TimerTask() {
+        @Override
+        public void run() {
+            // Do stuff here.
+            String dataToSend = str1+str2;
+            sender(dataToSend);
+        }
+    };
+
 }
