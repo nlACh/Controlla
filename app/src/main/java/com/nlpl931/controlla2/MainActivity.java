@@ -14,11 +14,12 @@ import android.os.Message;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.Switch;
-import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -30,14 +31,13 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothAdapter ba;
     private String mConnectedDeviceName = null;
     private BluetoothService mBTService = null;
-    private StringBuffer sbOut = null;
 
     private final String TAG = "MainActivity";
     private static final int loopInterval = 25; // In milliseconds. Will run 40 times a second.
     private boolean useBodySensor = false, canTransmit = false;
     int[][] data = new int[2][2]; // This data will be sent over to whatever device needed
     public static String str1, str2;
-    private TextView rx, tx;
+    private ArrayAdapter<String> text_rx, text_tx;
     private Switch arm, joy;
 
     @Override
@@ -57,9 +57,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        rx = findViewById(R.id.tv);
-        rx.setText(R.string.label_intro);
-        tx = findViewById(R.id.tv2);
+        ListView rx = findViewById(R.id.tv);
+        ListView tx = findViewById(R.id.tv2);
+        rx.setAdapter(text_rx);
+        tx.setAdapter(text_tx);
 
         arm = findViewById(R.id.arm);
         joy = findViewById(R.id.joy);
@@ -113,13 +114,9 @@ public class MainActivity extends AppCompatActivity {
         arm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (arm.isChecked()){
-                    canTransmit = true;
-                    rx.setText(R.string.label_armed);
-                }else{
-                    canTransmit = false;
-                    rx.setText(R.string.labelUnarmed);
-                }
+                //rx.setText(R.string.label_armed);
+                //rx.setText(R.string.labelUnarmed);
+                canTransmit = arm.isChecked();
             }
         });
 
@@ -145,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
                 str1 = angle +"\t"+ strength +"\t";
                 data[0][0] = strength;
                 data[0][1] = angle;
-                rx.setText(str1);
+                //rx.setText(str1);
             }
         }, loopInterval);
 
@@ -155,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
                 str2 = angle +"\t"+ strength;
                 data[1][0] = strength;
                 data[1][1] = angle;
-                tx.setText(str2);
+                //tx.setText(str2);
                 sender(str2);
             }
         }, loopInterval);
@@ -224,7 +221,8 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(on, 1);
         }
         mBTService = new BluetoothService(getBaseContext(), handler);
-        sbOut = new StringBuffer();
+        text_rx = new ArrayAdapter<>(this, R.layout.messages);
+        text_tx = new ArrayAdapter<>(this, R.layout.messages);
         for (int i = 0; i<2; i++){
             for (int j = 0; j<2; j++)
                 data[i][j] = 0;
@@ -243,7 +241,7 @@ public class MainActivity extends AppCompatActivity {
         if (msg.length()>0){
             byte[] send = msg.getBytes();
             mBTService.write(send);
-            tx.setText(msg);
+            Toast.makeText(getBaseContext(), msg, Toast.LENGTH_SHORT).show();
             //et.setText("");
         }
     }
@@ -257,13 +255,16 @@ public class MainActivity extends AppCompatActivity {
                 case MESSAGE_STATE_CHANGE:
                     switch (msg.arg1){
                         case STATE_CONNECTED:
-                            tx.setText("");
+                            Log.d(TAG, "Connected");
+                            text_rx.clear();
+                            text_tx.clear();
+                            //tx.setText("");
                             //rx.setText("");
                             break;
 
                         case STATE_CONNECTING:
                             Log.d(TAG, "Connecting");
-                            tx.setText(R.string.label_connecting);
+                            //tx.setText(R.string.label_connecting);
                             break;
 
                         case STATE_LISTEN:
@@ -274,12 +275,12 @@ public class MainActivity extends AppCompatActivity {
                 case MESSAGE_WRITE:
                     byte[] writeBuf = (byte[]) msg.obj;
                     String writeMessage = new String(writeBuf);
-                    tx.append("Me: "+writeMessage+"\n");
+                    text_tx.add("Me: " + writeMessage);
                     break;
                 case MESSAGE_READ:
                     byte[] readBuf = (byte[]) msg.obj;
                     String readMessage = new String(readBuf, 0, msg.arg1);
-                    tx.append(mConnectedDeviceName +": "+readMessage);
+                    text_rx.add(mConnectedDeviceName + ": " + readMessage);
                     break;
                 case MESSAGE_DEVICE_NAME:
                     mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);

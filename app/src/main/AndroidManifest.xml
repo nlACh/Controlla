@@ -15,7 +15,7 @@
             android:theme="@style/Theme.AppCompat.Dialog"
             android:excludeFromRecents="true"
             android:screenOrientation="landscape"
-            ></activity>
+            />
         <activity
             android:name=".BT"
             android:excludeFromRecents="true"
@@ -31,9 +31,9 @@
             </intent-filter>
         </activity>
     </application>
+
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BODY_SENSORS" />
-
     <uses-permission android:name="android.permission.BLUETOOTH" />
 
 </manifest>
