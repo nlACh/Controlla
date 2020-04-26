@@ -1,13 +1,14 @@
 package com.nlpl931.controlla2;
 
-import androidx.appcompat.app.AppCompatActivity;
-import io.github.controlwear.virtual.joystick.android.JoystickView;
-
-
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.Context;
 import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -22,11 +23,22 @@ import android.widget.PopupMenu;
 import android.widget.Switch;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+import io.github.controlwear.virtual.joystick.android.JoystickView;
 
-import static com.nlpl931.controlla2.State.*;
-import static com.nlpl931.controlla2.Constants.*;
+import static com.nlpl931.controlla2.Constants.DEVICE_NAME;
+import static com.nlpl931.controlla2.Constants.MESSAGE_DEVICE_NAME;
+import static com.nlpl931.controlla2.Constants.MESSAGE_READ;
+import static com.nlpl931.controlla2.Constants.MESSAGE_STATE_CHANGE;
+import static com.nlpl931.controlla2.Constants.MESSAGE_TOAST;
+import static com.nlpl931.controlla2.Constants.MESSAGE_WRITE;
+import static com.nlpl931.controlla2.Constants.TOAST;
+import static com.nlpl931.controlla2.State.STATE_CONNECTED;
+import static com.nlpl931.controlla2.State.STATE_CONNECTING;
+import static com.nlpl931.controlla2.State.STATE_LISTEN;
+import static com.nlpl931.controlla2.State.STATE_NONE;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
     private BluetoothAdapter ba;
     private String mConnectedDeviceName = null;
@@ -34,6 +46,16 @@ public class MainActivity extends AppCompatActivity {
 
     private final String TAG = "MainActivity";
     private static final int loopInterval = 25; // In milliseconds. Will run 40 times a second.
+
+    // Accelerometer orientation data
+    private float[] mAccelerometerData = new float[3];
+    private float[] mMagnetometerData = new float[3];
+    private Sensor mSensorAccelerometer;
+    private Sensor mSensorMagnetometer;
+    private SensorManager mSensorManager;
+    private float[] orientationValues = new float[3];
+    ///
+
     private boolean useBodySensor = false, canTransmit = false;
     int[][] data = new int[2][2]; // This data will be sent over to whatever device needed
     public static String str1, str2;
@@ -159,8 +181,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart(){
+        super.onStart();
+        // Register Listeners for the sensors!
+        if (mSensorAccelerometer != null)
+            mSensorManager.registerListener(this, mSensorAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        if (mSensorMagnetometer != null)
+            mSensorManager.registerListener(this, mSensorMagnetometer, SensorManager.SENSOR_DELAY_NORMAL);
+
+        // Bluetooth service
+        if (mBTService != null){
+            if (mBTService.getState() == STATE_NONE)
+                mBTService.start();
+        }
+    }
+    @Override
     protected void onResume(){
         super.onResume();
+        // Register Listeners for the sensors!
+        if (mSensorAccelerometer != null)
+            mSensorManager.registerListener(this, mSensorAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        if (mSensorMagnetometer != null)
+            mSensorManager.registerListener(this, mSensorMagnetometer, SensorManager.SENSOR_DELAY_NORMAL);
+
         if (mBTService != null){
             if (mBTService.getState() == STATE_NONE)
                 mBTService.start();
@@ -170,8 +213,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy(){
         super.onDestroy();
+        // Stop the BTService and its threads
         if (mBTService != null)
             mBTService.stop();
+
+        // Unregister the listeners
+        mSensorManager.unregisterListener(this);
     }
 
     //  Immersive mode
@@ -227,8 +274,15 @@ public class MainActivity extends AppCompatActivity {
             for (int j = 0; j<2; j++)
                 data[i][j] = 0;
         }
+        // Set up the sensors
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mSensorAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mSensorMagnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        assert mSensorManager != null;
+        assert mSensorMagnetometer != null;
 
-        // Set up a timer to send data at fixed intervals.
+        // TODO: Properly detect sensors instead of assertion
+
     }
 
     private void sender(String msg){
@@ -293,5 +347,32 @@ public class MainActivity extends AppCompatActivity {
         }
 
     };
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i){
+        // Do nothing here for now...
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent){
+        int sensorType = sensorEvent.sensor.getType();
+        switch (sensorType){
+            case Sensor.TYPE_ACCELEROMETER:
+                mAccelerometerData = sensorEvent.values.clone();
+                break;
+
+            case Sensor.TYPE_MAGNETIC_FIELD:
+                mMagnetometerData = sensorEvent.values.clone();
+
+            default:
+                return;
+        }
+
+        float[] rotationMatrix = new float[9];
+        boolean OK = SensorManager.getRotationMatrix(rotationMatrix, null, mAccelerometerData, mMagnetometerData);
+        if (OK){
+            SensorManager.getOrientation(rotationMatrix, orientationValues);
+        }
+    }
 
 }
