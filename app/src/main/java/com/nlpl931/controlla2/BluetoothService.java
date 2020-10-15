@@ -47,7 +47,8 @@ class BluetoothService {
 
     // Unique UUID for this application
     private static final UUID MY_UUID_SECURE =
-            UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
+            UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+            //UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
     // private static final UUID MY_UUID2 =
     //        UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
 
@@ -283,8 +284,10 @@ class BluetoothService {
     private Runnable sendData = new Runnable() {
         @Override
         public void run() {
-            String s = MainActivity.str1 + MainActivity.str2;
-            write(s.getBytes());
+            if (MainActivity.IS_ARMED) {
+                MainActivity.DATA += ";";
+                write(MainActivity.DATA.getBytes());
+            }
             mHandler.postDelayed(this, 100);
         }
     };

@@ -26,26 +26,18 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 
-import static com.nlpl931.controlla2.Constants.DEVICE_NAME;
-import static com.nlpl931.controlla2.Constants.MESSAGE_DEVICE_NAME;
-import static com.nlpl931.controlla2.Constants.MESSAGE_READ;
-import static com.nlpl931.controlla2.Constants.MESSAGE_STATE_CHANGE;
-import static com.nlpl931.controlla2.Constants.MESSAGE_TOAST;
-import static com.nlpl931.controlla2.Constants.MESSAGE_WRITE;
-import static com.nlpl931.controlla2.Constants.TOAST;
-import static com.nlpl931.controlla2.State.STATE_CONNECTED;
-import static com.nlpl931.controlla2.State.STATE_CONNECTING;
-import static com.nlpl931.controlla2.State.STATE_LISTEN;
-import static com.nlpl931.controlla2.State.STATE_NONE;
+import static com.nlpl931.controlla2.Constants.*;
+import static com.nlpl931.controlla2.State.*;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
-    private BluetoothAdapter ba;
-    private String mConnectedDeviceName = null;
-    private BluetoothService mBTService = null;
-
     private final String TAG = "MainActivity";
     private static final int loopInterval = 25; // In milliseconds. Will run 40 times a second.
+    static boolean IS_ARMED = false;
+
+    private BluetoothAdapter ba;
+    private BluetoothService mBTService = null;
+
 
     // Accelerometer orientation data
     private float[] mAccelerometerData = new float[3];
@@ -56,9 +48,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private float[] orientationValues = new float[3];
     ///
 
-    private boolean useBodySensor = false, canTransmit = false;
+    private String mConnectedDeviceName = null;
+    private boolean useBodySensor = false;
     int[][] data = new int[2][2]; // This data will be sent over to whatever device needed
-    public static String str1, str2;
+    public static String DATA = "";
     private ArrayAdapter<String> text_rx, text_tx;
     private Switch arm, joy;
 
@@ -138,7 +131,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 //rx.setText(R.string.label_armed);
                 //rx.setText(R.string.labelUnarmed);
-                canTransmit = arm.isChecked();
+                if (arm.isChecked()){
+                    IS_ARMED = true;
+                    DATA = "1,";
+                    //sendMessage("ARMED");
+                }else{
+                    //sendMessage("UN-ARM");
+                    DATA = "0,";
+                }
             }
         });
 
@@ -161,9 +161,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         motor.setOnMoveListener(new JoystickView.OnMoveListener() {
             @Override
             public void onMove(int angle, int strength) {
-                str1 = angle +"\t"+ strength +"\t";
-                data[0][0] = strength;
-                data[0][1] = angle;
+                if (IS_ARMED){
+                    DATA += ("m" + String.valueOf(angle) + ":" + String.valueOf(strength) + ",");
+                }
+                //data[0][0] = strength;
+                //data[0][1] = angle;
                 //rx.setText(str1);
             }
         }, loopInterval);
@@ -171,11 +173,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         head.setOnMoveListener(new JoystickView.OnMoveListener() {
             @Override
             public void onMove(int angle, int strength) {
-                str2 = angle +"\t"+ strength;
-                data[1][0] = strength;
-                data[1][1] = angle;
+                if (IS_ARMED){
+                    DATA += ("h" + String.valueOf(angle) + ":" + String.valueOf(strength) + ",");
+                }
+                //data[1][0] = strength;
+                //data[1][1] = angle;
                 //tx.setText(str2);
-                sender(str2);
             }
         }, loopInterval);
     }
@@ -193,6 +196,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (mBTService != null){
             if (mBTService.getState() == STATE_NONE)
                 mBTService.start();
+            DATA = "";
         }
     }
     @Override
@@ -207,6 +211,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (mBTService != null){
             if (mBTService.getState() == STATE_NONE)
                 mBTService.start();
+            DATA = "";
         }
     }
 
@@ -285,7 +290,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
-    private void sender(String msg){
+    private void sendMessage(String msg){
         if (mBTService.getState() != STATE_CONNECTED){
             //Toast.makeText(getBaseContext(), "Not connected", Toast.LENGTH_SHORT).show();
             Log.d(TAG, "Not connected");

@@ -16,8 +16,8 @@ public interface Constants {
 }
 
 interface State{
-    static final int STATE_NONE = 0;
-    static final int STATE_LISTEN = 1;
-    static final int STATE_CONNECTING = 2;
-    static final int STATE_CONNECTED = 3;
+    int STATE_NONE = 0;
+    int STATE_LISTEN = 1;
+    int STATE_CONNECTING = 2;
+    int STATE_CONNECTED = 3;
 }
